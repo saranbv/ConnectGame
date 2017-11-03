@@ -1,0 +1,428 @@
+
+/**
+ * This program is used to implement the game sample Connect-N 
+ */
+
+/**
+ * @author           Saranya Dasarathan
+ * @date             10/25/2016
+ * @assignmentnumber 3
+ * @classname        CS585 G Java Programming Fall 2016 
+ */
+
+import java.util.Scanner;
+
+public class ConnectN {
+
+	private int gameState[][];
+	private int rows;
+	private int columns;
+	private int winningNumber;
+	private int lastRow, lastColumn;
+	private static Scanner scanner = new Scanner(System.in);
+	
+
+	public ConnectN() 
+	{
+		// initialize class variables to default parameters
+		rows = 6;
+		columns = 7;
+		winningNumber = 4;
+		// initialize lastRow and lastColumn
+		lastRow = 0;
+		lastColumn = 0;
+		// initialize game state
+		gameState = new int[rows][columns];
+
+	}
+
+	public ConnectN(int rows, int columns, int winningNumber) 
+	{
+		// initialize
+		// initialize class variables based on input parameters
+		this.rows = rows;
+		this.columns = columns;
+		this.winningNumber = winningNumber;
+		// initialize lastRow and lastColumn
+		lastRow = 0;
+		lastColumn = 0;
+		// initialize game state
+		gameState = new int[rows][columns];
+	}
+
+
+	public void clearGame() 
+	{
+		// set all positions to empty
+		gameState = new int[rows][columns];
+	}
+
+	public void outputGameState() 
+	{
+		// create a string builder
+		StringBuilder outputDisplay = new StringBuilder();
+		// loop through all rows
+		for (int i = 0; i < gameState.length; i++)
+		// loop through all columns
+		{
+			for (int j = 0; j < gameState[i].length; j++) 
+			{
+				// append gameState[row][column] to the output string builder
+				outputDisplay.append(gameState[i][j]);
+				outputDisplay.append("\t");
+			}
+			outputDisplay.append("\n");
+		}
+		// output the game state string
+		System.out.println(outputDisplay.toString());
+	}
+
+	private boolean isGameFull() 
+	{
+		boolean isFull = true;
+		// check if game board is full
+		// loop through all columns
+		for (int j = 0; j < gameState[0].length; j++) 
+		{
+			// if the top position is empty then the game is not full
+			if (gameState[0][j] == 0) 
+			{
+				isFull = false;
+			}
+		}
+		return isFull;
+	}
+
+	public boolean insertChip(int playerNumber, int columnNumber) 
+	{
+		boolean inserted = false;
+		// try to insert
+		// start at row 0 (the top row)
+		int arrayLength = gameState.length;
+		for (int i = arrayLength - 1; i >= 0 && !inserted; i--) 
+		{
+			// if the top position is empty
+			if (gameState[i][columnNumber - 1] == 0) 
+			{
+				// loop through the rows until a non-empty position is found
+				// set game state position to the player number
+				gameState[i][columnNumber - 1] = playerNumber;
+				// inserted = true
+				inserted = true;
+				// set last row and last column to the inserted position
+				lastRow = i;
+				lastColumn = columnNumber - 1;
+			}
+		}
+		return inserted;
+	}
+
+	public void playGame() 
+	{
+		int turn = 1;
+		boolean gameOn = true;
+		Scanner scanner = new Scanner(System.in);
+		outputGameState();
+		while (gameOn) 
+		{
+			boolean isInvalidInput = true;
+			// output players turn
+			System.out.println("Player " + turn + "'s " + "turn \n");
+			while (isInvalidInput) 
+			{
+				int userInputColumnNumber = 0;
+				System.out.println("Enter a column number or -1 to quit \n");
+				try 
+				{
+					userInputColumnNumber = Integer.parseInt(scanner.next());
+				} catch (NumberFormatException e) 
+				{
+					userInputColumnNumber = 0;
+				}
+				// while input is not valid
+				if (userInputColumnNumber == -1)
+				{
+					isInvalidInput = false;
+					gameOn = false;
+
+				} 
+				else if (!(userInputColumnNumber >= 1) || !(userInputColumnNumber <= columns)) 
+				{
+					System.out.println("Invalid Input \n");
+				} 
+				else 
+				{
+					isInvalidInput = false;
+					boolean isInsertedSucessful = insertChip(turn, userInputColumnNumber);
+					outputGameState();
+					if (isInsertedSucessful) 
+					{
+						int winner = detectWin();
+						if ((winner == 1) || (winner == 2)) 
+						{
+							System.out.println("Player" + winner + "has won \n");
+							gameOn = false;
+						} 
+						else if (winner == 0) 
+						{
+							if (turn == 1) 
+							{
+								turn = 2;
+							} 
+							else if (turn == 2) 
+							{
+								turn = 1;
+							}
+						}
+						if (gameOn && isGameFull()) 
+						{
+							gameOn = false;
+							System.out.println("Tie Game");
+						}
+					} 
+					else 
+					{
+						System.out.println("Cannot insert a chip in that column \n");
+					}
+				}
+
+			}
+		}
+
+	}
+
+	public int detectWin() 
+	{
+		int winner = 0;
+		int rowWinner = 0;
+		int columnWinner = 0;
+		int diagonalWinner = 0;
+		// detect win rows
+		rowWinner = detectWinRows();
+		// detect win columns
+		columnWinner = detectWinColumns();
+		// detect win diagonals
+		diagonalWinner = detectWinDiagonals();
+
+		if (rowWinner > 0)
+		{
+			winner = rowWinner;
+		} else if (columnWinner > 0) 
+		{
+			winner = columnWinner;
+		} else if (diagonalWinner > 0)
+		{
+			winner = diagonalWinner;
+		}
+
+		return winner;
+	}
+
+	private int detectWinColumns() 
+	{
+		// return the player who won or 0 if no player has won
+
+		int winColumns = 0;
+		int lastPlayer = gameState[lastRow][lastColumn];
+		int count = 1;
+		boolean stopDown = false;
+		// start at last posotion
+		// loop down the column as far as needed
+			for (int j = lastRow + 1; j < rows && stopDown == false; j++) 
+			{
+		//verify if the current position has the last player value
+			if (gameState[j][lastColumn] == lastPlayer) 
+			{
+				count++;
+			} else {
+				stopDown = true;
+			}
+		}
+		// set winColumn if count of number in a row is greater than winning
+		// number
+		if (count >= winningNumber)
+		{
+			winColumns = lastPlayer;
+		}
+
+		return winColumns;
+	}
+
+	private int detectWinRows() 
+	{
+		int winRows = -1;
+		int lastPlayer = gameState[lastRow][lastColumn];
+		int count = 1; // count of chips in a row
+		boolean stopLeft = false; // stop searching to the left
+		boolean stopRight = false; // stop searching to the right
+
+		// left size
+		// loop starting at lastColumn-1 until out of bounds or stopLeft = false
+			for (int j = lastColumn - 1; j >= 0 && stopLeft == false; j--) 
+			{
+			// if current position == player
+			if (gameState[lastRow][j] == lastPlayer) 
+			{
+			// increment count	
+				count++;
+			} else
+			{
+				// stopLeft = true
+				stopLeft = true;
+			}
+			}
+
+		// right side 
+
+		for (int j = lastColumn + 1; j < columns && stopRight == false; j++) 
+		{
+			if (gameState[lastRow][j] == lastPlayer) 
+			{
+				count++;
+			} else {
+				stopRight = true;
+			}
+		}
+
+		// if count >= winningNumber
+		// set winRows to the last player
+
+		if (count >= winningNumber) 
+		{
+			winRows = lastPlayer;
+		}
+
+		return winRows;
+	}
+
+	private int detectWinDiagonals() 
+	{
+
+		int winDiagonals = -1;
+		int lastPlayer = gameState[lastRow][lastColumn];
+		int countLeftToRight = 1; // count in a row for diagonals from left to
+									// right
+		int countRightToLeft = 1; // count in a row for diagonals from right to
+									// left
+		boolean stopLeft1 = false; // stop searching to the left (diagonal left
+									// to right)
+		boolean stopRight1 = false; // stop searhcing to the right (diagonal
+									// right to left)
+		boolean stopLeft2 = false; // stop searching to the left (diagonal left
+									// to right)
+		boolean stopRight2 = false; // stop searching to the right (diagonal
+									// right to left)
+
+		// diagonal left to right
+		// use winRows code and modify to work with the changing rows
+
+		int counterIncrementLeftToRight = 1;//temporary variable to track and increment the row movement left to right
+
+		for (int j = lastColumn - 1; j >= 0; j--) 
+		{
+			if ((stopLeft1 == false) && (lastRow - counterIncrementLeftToRight >= 0)
+					&& (gameState[lastRow - counterIncrementLeftToRight][j] == lastPlayer)) 
+			{
+				countLeftToRight++;
+			} 
+			else 
+			{
+				stopLeft1 = true;
+			}
+			if ((stopLeft2 == false) && (lastRow + counterIncrementLeftToRight < rows)
+					&& (gameState[lastRow + counterIncrementLeftToRight][j] == lastPlayer)) 
+			{
+				countRightToLeft++;
+			} 
+			else 
+			{
+				stopLeft2 = true;
+			}
+			counterIncrementLeftToRight++;
+		}
+
+		// diagonal rightToLeft
+		// use winRows code and modify to work with the changing rows
+
+		int counterIncrementRightToLeft = 1;//temporary variable to track and increment the row movement  right to left 
+
+		for (int j = lastColumn + 1; j < columns; j++) 
+		{
+			if ((stopRight1 == false) && (lastRow + counterIncrementRightToLeft < rows)
+					&& (gameState[lastRow + counterIncrementRightToLeft][j] == lastPlayer)) 
+			{
+				countLeftToRight++;
+			} 
+			else 
+			{
+				stopRight1 = true;
+			}
+			if ((stopRight2 == false) && (lastRow - counterIncrementRightToLeft >= 0)
+					&& (gameState[lastRow - counterIncrementRightToLeft][j] == lastPlayer)) 
+			{
+				countRightToLeft++;
+			} 
+			else 
+			{
+				stopRight2 = true;
+			}
+			counterIncrementRightToLeft++;
+		}
+
+		// if countLeftToRight or countRightToLeft >= winningNumber
+		// setwinDiagonals to the last player
+
+		if ((countLeftToRight >= winningNumber) || (countRightToLeft >= winningNumber)) 
+		{
+			winDiagonals = lastPlayer;
+		}
+
+		return winDiagonals;
+	}
+
+	public static void main(String[] args) 
+	{
+		int rows = 6;
+		int columns = 7;
+		int winningNumber = 4;
+
+		if (args.length == 3) {
+			// set rows, columns, and winningNumber to the input arguments
+			rows = Integer.parseInt(args[0]);
+			columns = Integer.parseInt(args[1]);
+			winningNumber = Integer.parseInt(args[2]);
+		}
+
+		boolean keepPlaying = true;
+
+		while (keepPlaying) {
+			ConnectN connect = new ConnectN(rows, columns, winningNumber);
+			boolean validInput = false;
+			connect.playGame();
+			
+			// ask if user wants to play again
+			// continue loop if he/she does
+			while (!validInput) {
+				System.out.println("Enter 1 to play or -1 to quit");
+				int inputToContinue = 0;
+				try {
+					inputToContinue = Integer.parseInt(scanner.next());
+				} catch (NumberFormatException e) {
+					System.out.println("Invalid Input\n");
+				}
+
+				if (inputToContinue == -1) {
+					keepPlaying = false;
+					validInput = true;
+				} else if (inputToContinue == 1) {
+					keepPlaying = true;
+					validInput = true;
+				}
+			}
+		}
+
+		scanner.close();
+
+	}
+}
+
